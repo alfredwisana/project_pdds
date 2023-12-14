@@ -8,7 +8,7 @@ $stmt = $con->prepare($sql);
 $stmt->execute();
 $res = $stmt->get_result();
 
-
+$col_title = [];
 while ($row = $res->fetch_assoc()) {
     $cursor = $customer->find(
         [
@@ -18,7 +18,20 @@ while ($row = $res->fetch_assoc()) {
             'projection' => ['_id' => 0]
         ]
     );
-}
+
+    foreach ($cursor as $doc) {
+        $temp_title = [];
+        foreach ($doc as $key => $value) {
+            if (is_string($value)) {
+                array_push($temp_title, $key);
+            }
+        }
+
+        if (count($temp_title) > count($col_title)) {
+            $col_title = $temp_title;
+        }
+    }
+};
 ?>
 
 
@@ -35,6 +48,7 @@ while ($row = $res->fetch_assoc()) {
     #table_wrapper {
         margin: 0 auto;
         position: relative;
+
     }
 
     #wrapper {
@@ -58,7 +72,7 @@ while ($row = $res->fetch_assoc()) {
     }
 
     #table_title,
-    #status {
+    #period {
         font-weight: bold;
         text-align: center;
         font-size: larger;
@@ -69,38 +83,103 @@ while ($row = $res->fetch_assoc()) {
 <body>
     <div id="wrapper">
 
-        <label for="period">Start Date</label>
-        <input type="date" id="start_period" name="period" min="1996-01-01" max="1998-12-31">
-        <label for="period">End Date</label>
-        <input type="date" id="end_period" name="period" min="1996-01-01" max="1998-12-31">
+        <label for="start_period">Start Date</label>
+        <input type="date" class="form-control datepicker" id="start_period" name="period" min="1996-01-01" max="1998-12-31">
+        <label for="end_period">End Date</label>
+        <input type="date" class="form-control datepicker" id="end_period" name="period" min="1996-01-01" max="1998-12-31">
 
-        <input type="button" value="Filter">
-    </div>
+        <input type="button" id="butt-filter" value="Filter">
 
-    <h4 id="status"></h4>
-    <div id="table_wrapper">
-        <table>
-            <thead>
-                <h4 id="table_title">Customer Segmentation</h4>
-                <tr>
+        <h4 id="period"></h4>
+        <div id="table_wrapper" class="table-responsive">
+            <table>
+                <thead>
+                    <h4 id="table_title">Customer Segmentation</h4>
+                    <tr>
+                        <th>No</th>
+                        <?php
+                        foreach ($col_title as $doc) {
+
+                            echo '<th scope="col">' . $doc . '</th>';
+                        };
+                        ?>
+                        <th scope="col"> Amount of Spending </th>
+                        <th scope="col"> Customer Segmentation </th>
+                    </tr>
+                </thead>
+
+                <tbody id="customer_data">
+
                     <?php
-                    foreach ($cursor as $doc) {
-                        foreach ($doc as $key => $value) {
-                            if (is_string($key)) {
-                                echo '<th scope="col">' . $key . '</th>';
-                            }
-                        }
-                    };
+                    $sql = "SELECT CustomerID, SUM(TotalPrice) as total_purchase, CASE WHEN SUM(TotalPrice) >= 80000 THEN 'High-Value' WHEN SUM(TotalPrice) >= 20000 THEN 'Valuable' ELSE 'Low-Value' END AS customer_segment FROM orders GROUP BY CustomerID";
+                    $stmt = $con->prepare($sql);
+                    $stmt->execute();
+                    $res = $stmt->get_result();
+
+                    $i = 1;
+                    while ($rows = $res->fetch_assoc()) { ?>
+                        <tr>
+                            <th scope='row'><?php echo $i; ?> </th>
+                            <?php
+                            $cursors = $customer->find(
+                                [
+                                    'CustomerID' => $rows['CustomerID']
+                                ],
+                                [
+                                    'projection' => ['_id' => 0]
+                                ]
+                            );
+                            foreach ($cursors as $docs) {
+                                foreach ($docs as $keys => $values) {
+                                    if (is_string($values)) {
+                            ?>
+
+                                        <th><?php echo $values; ?></th>
+                            <?php
+                                    }
+                                }
+                            } ?>
+                            <th><?php echo $rows['total_purchase']; ?></th>
+                            <th><?php echo $rows['customer_segment']; ?> </th>
+                        </tr>
+                    <?php $i = $i + 1;
+                    }
 
                     ?>
-                </tr>
-            </thead>
-            
-            <div id="customer_data">
 
-            </div>
-        </table>
+                </tbody>
+            </table>
+        </div>
+
     </div>
 </body>
 
 </html>
+
+
+<script>
+    $(document).ready(function() {
+        $('#butt-filter').on('click', function() {
+            var v_start_date = $("#start_period").val();
+            var v_end_date = $("#end_period").val();
+
+            $.ajax({
+                type: 'POST',
+                url: "customer_filter.php",
+
+                data: {
+                    start_date: v_start_date,
+                    end_date: v_end_date,
+
+                },
+                success: function(result) {
+                    $("#period").html("Period: " v_start_date +" - "+ v_end_date)
+
+                    $("#customer_data").html(result);
+
+                    console.log(result);
+                }
+            })
+        })
+    });
+</script>

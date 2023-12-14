@@ -10,7 +10,7 @@ if (isset($_POST['start_date']) && isset($_POST['end_date'])) {
     $end_date = date("Y-m-d", strtotime($end_date));
 
 
-    $sql = "SELECT ProductID,SUM(Quantity) as total_purchase FROM orders WHERE OrderDate >= '$start_date' AND OrderDate <= '$end_date' group by ProductID ORDER BY total_purchase DESC LIMIT 5";
+    $sql = "SELECT CustomerID, SUM(TotalPrice) as total_purchase, CASE WHEN SUM(TotalPrice) >= 80000 THEN 'High-Value' WHEN SUM(TotalPrice) >= 20000 THEN 'Valuable' ELSE 'Low-Value' END AS customer_segment FROM orders WHERE OrderDate >= '$start_date' AND OrderDate <= '$end_date' GROUP BY CustomerID";
     $stmt = $con->prepare($sql);
     $stmt->execute();
     $res = $stmt->get_result();
@@ -18,12 +18,12 @@ if (isset($_POST['start_date']) && isset($_POST['end_date'])) {
 
 
     $i = 1;
-    while ($rows = $res->fetch_assoc()) {
+    while($rows = $res->fetch_assoc()) {
         echo "<tr>";
         echo "<th scope='row'>$i</th>";
-        $cursors = $product->find(
+        $cursors = $customer->find(
             [
-                'ProductID' => $rows['ProductID']
+                'CustomerID' => $rows['CustomerID']
             ],
             [
                 'projection' => ['_id' => 0]
@@ -38,6 +38,7 @@ if (isset($_POST['start_date']) && isset($_POST['end_date'])) {
             }
         }
         echo "<th>" . $rows['total_purchase'] . "</th>";
+        echo "<th>" . $rows['customer_segment'] . "</th>";
         echo "</tr>";
         $i = $i + 1;
     }
