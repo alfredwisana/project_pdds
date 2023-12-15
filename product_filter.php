@@ -1,6 +1,6 @@
 <?php
 
-require "connect.php";
+require "connectmysql.php";
 
 if (isset($_POST['start_date']) && isset($_POST['end_date'])) {
     $start_date = $_POST['start_date'];

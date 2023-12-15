@@ -1,5 +1,5 @@
 <?php
-require "./connect.php";
+require "./connectmysql.php";
 require "./header.php";
 
 // get top 5 product from all
@@ -23,7 +23,7 @@ while ($row = $res->fetch_assoc()) {
     foreach ($cursor as $doc) {
         $temp_title = [];
         foreach ($doc as $key => $value) {
-            if (is_string($value) || is_int($value) || is_double($value)||is_float($value)) {
+            if (is_string($value) || is_int($value) || is_double($value)) {
                 array_push($temp_title, $key);
             }
         }
@@ -80,9 +80,22 @@ while ($row = $res->fetch_assoc()) {
     <title>Most Bought Product</title>
 </head>
 
-<body>
-    <div id="wrapper">
+<body >
+<div class="w3-sidebar w3-bar-block w3-border-right bg-amber-100" style="display:none" id="mySidebar">
+        <button onclick="w3_close()" class="w3-bar-item w3-large"> &times;</button>
+        <a href="index.php" class="w3-bar-item w3-button">Revenue</a>
+        <a href="product.php" class="w3-bar-item w3-button">Product</a>
+        <a href="customer.php" class="w3-bar-item w3-button">Customer</a>
+    </div>
 
+    <div class="w3-khaki p-3 shadow-2xl flex items-center">
+        <div class="w-16">
+            <button class="text-khaki text-3xl" onclick="w3_open()">☰</button>
+        </div>
+        <h1 class="text-3xl font-bold flex-1 text-center ml-4 ">Top 5 Product</h1>
+    </div>
+    <div id="wrapper">
+    
         <label for="start_period">Start Date</label>
         <input type="date" class="form-control datepicker" id="start_period" name="period" min="1996-01-01" max="1998-12-31">
         <label for="end_period">End Date</label>
@@ -90,6 +103,7 @@ while ($row = $res->fetch_assoc()) {
 
         <input type="button" id="butt-filter" value="Filter">
         <center>
+            <div id="cust_segment"></div>
             <h4 id="period"></h4>
 
             <div id="table_wrapper" class="table-responsive">
@@ -175,7 +189,7 @@ while ($row = $res->fetch_assoc()) {
 
                 },
                 success: function(result) {
-                    $("#period").html("Period: " v_start_date +" - "+ v_end_date)
+                    $("#period").html("Period: " + v_start_date +" - "+ v_end_date)
                     $("#product_data").html(result);
 
                     console.log(result);
@@ -183,4 +197,15 @@ while ($row = $res->fetch_assoc()) {
             })
         })
     });
+
+
+    function w3_open() {
+        document.getElementById("mySidebar").style.display = "block";
+    }
+
+    function w3_close() {
+        document.getElementById("mySidebar").style.display = "none";
+    }
 </script>
+
+

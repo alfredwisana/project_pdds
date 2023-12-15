@@ -2,15 +2,17 @@
 
 require "connectmysql.php";
 
-if (isset($_POST['start_date']) && isset($_POST['end_date'])) {
-    $start_date = $_POST['start_date'];
-    $end_date = $_POST['end_date'];
+if (isset($_POST['country'])) {
+    
+    $country = $_POST['country'];
+    
 
-    $start_date = date("Y-m-d", strtotime($start_date));
-    $end_date = date("Y-m-d", strtotime($end_date));
+    if($country === 'All'){
+    $sql = "SELECT o.CustomerID, SUM(TotalPrice) as total_purchase, CASE WHEN SUM(TotalPrice) >= 80000 THEN 'High-Value' WHEN SUM(TotalPrice) >= 20000 THEN 'Valuable' ELSE 'Low-Value' END AS customer_segment FROM orders o  GROUP BY o.CustomerID";
+    }else{
+        $sql = "SELECT o.CustomerID, SUM(TotalPrice) as total_purchase, CASE WHEN SUM(TotalPrice) >= 80000 THEN 'High-Value' WHEN SUM(TotalPrice) >= 20000 THEN 'Valuable' ELSE 'Low-Value' END AS customer_segment FROM orders o join customers c ON o.CustomerID = c.CustomerID WHERE c.Country = '$country' GROUP BY o.CustomerID";
 
-
-    $sql = "SELECT CustomerID, SUM(TotalPrice) as total_purchase, CASE WHEN SUM(TotalPrice) >= 80000 THEN 'High-Value' WHEN SUM(TotalPrice) >= 20000 THEN 'Valuable' ELSE 'Low-Value' END AS customer_segment FROM orders WHERE OrderDate >= '$start_date' AND OrderDate <= '$end_date' GROUP BY CustomerID";
+    }
     $stmt = $con->prepare($sql);
     $stmt->execute();
     $res = $stmt->get_result();
@@ -54,7 +56,7 @@ ORDER BY customer_count DESC
         echo "<th scope='row'>$i</th>";
         $cursors = $customer->find(
             [
-                'CustomerID' => $rows['CustomerID']
+                'CustomerID' => $rows['CustomerID'],
             ],
             [
                 'projection' => ['_id' => 0]
