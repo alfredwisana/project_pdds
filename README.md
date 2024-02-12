@@ -12,6 +12,8 @@ ga boleh pake 2 2 nya sql database, tapi boleh 2 2 nya no-sql database
 cari data di kaggle kalo mau
 <br>
 yang ambil bintel bisa pake data bintel kalian
+<br>
+this data is using the northwind data
 
 <br>
 <br>
